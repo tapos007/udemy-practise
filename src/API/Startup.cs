@@ -2,8 +2,11 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using API.Middlewares;
+using BLL;
 using DLL;
 using DLL.DBContext;
+using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
@@ -29,7 +32,7 @@ namespace API
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
-            services.AddControllers();
+            services.AddControllers().AddFluentValidation().AddNewtonsoftJson();
 
             SetupSwagger(services);
             services.AddApiVersioning(config =>
@@ -43,8 +46,9 @@ namespace API
             
             
             DLLDependency.AllDependency(services,Configuration);
-            
-            
+            BLLDependency.AllDependency(services, Configuration);
+
+
         }
 
         private void SetupSwagger(IServiceCollection services)
@@ -79,7 +83,8 @@ namespace API
             {
                 app.UseDeveloperExceptionPage();
             }
-            
+
+            app.UseMiddleware<ExceptionMiddleware>();
             
             // Enable middleware to serve generated Swagger as a JSON endpoint.
             app.UseSwagger();

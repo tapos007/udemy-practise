@@ -1,6 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using BLL.Services;
 using DLL.Model;
 using DLL.Repositories;
 using Microsoft.AspNetCore.Mvc;
@@ -10,43 +11,43 @@ namespace API.Controllers
     
     public class StudentController : MainApiController
     {
-        private readonly IStudentRepository _studentRepository;
+        private readonly IStudentService _studentService;
 
 
-        public StudentController(IStudentRepository studentRepository)
+        public StudentController(IStudentService studentService)
         {
-            _studentRepository = studentRepository;
+            _studentService = studentService;
         }
 
         [HttpGet]
-        public async Task<ActionResult> GetAll([FromQuery] string rollNumber, [FromQuery] string nickName)
+        public async Task<ActionResult> GetAll()
         {
-            return Ok(await _studentRepository.GetAllAsync());
+            return Ok(await _studentService.GetAllAsync());
         }
 
         [HttpGet("{email}")]
         public async Task<ActionResult> GetA(string email)
         {
-            return Ok(await  _studentRepository.GetAAsync(email));
+            return Ok(await  _studentService.GetAAsync(email));
         }
         
         
         [HttpPost]
-        public async Task<ActionResult> Insert([FromForm] Student student)
+        public async Task<ActionResult> Insert(Student student)
         {
-            return Ok(await _studentRepository.InsertAsync(student));
+            return Ok(await _studentService.InsertAsync(student));
         }
         
         [HttpPut("{email}")]
         public async Task<ActionResult> Update(string email,Student student)
         {
-            return Ok(await _studentRepository.UpdateAsync(email,student));
+            return Ok(await _studentService.UpdateAsync(email,student));
         }
         
         [HttpDelete("{email}")]
         public async Task<ActionResult> Delete(string email)
         {
-            return Ok(await _studentRepository.DeleteAsync(email));
+            return Ok(await _studentService.DeleteAsync(email));
         }
     }
     

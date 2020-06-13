@@ -10,9 +10,11 @@ namespace DLL.Repositories
     {
         Task<Department> InsertAsync(Department department);
         Task<List<Department>> GetAllAsync();
-        Task<Department> UpdateAsync(string code, Department department);
-        Task<Department> DeleteAsync(string code);
+        Task<bool> UpdateAsync(Department department);
+        Task<bool> DeleteAsync(Department department);
         Task<Department> GetAAsync(string code);
+        Task<Department> FindByName(string name);
+        Task<Department> FindByCode(string code);
     }
 
     public class DepartmentRepository : IDepartmentRepository
@@ -36,13 +38,15 @@ namespace DLL.Repositories
             return await _context.Departments.ToListAsync();
         }
         
-        public async Task<Department> DeleteAsync(string code)
+        public async Task<bool> DeleteAsync(Department department)
         {
-            var department = await _context.Departments.FirstOrDefaultAsync(x => x.Code == code);
-
+            
             _context.Departments.Remove(department);
-            await _context.SaveChangesAsync();
-            return department;
+            if (await _context.SaveChangesAsync() > 0)
+            {
+                return true;
+            }
+            return false;
             
         }
         
@@ -52,14 +56,26 @@ namespace DLL.Repositories
             return department;
             
         }
-        
-        public async Task<Department> UpdateAsync(string code,Department department)
+
+        public async Task<Department> FindByName(string name)
         {
-            var findDepartment = await _context.Departments.FirstOrDefaultAsync(x => x.Code == code);
-            findDepartment.Name = department.Name;
-            _context.Departments.Update(findDepartment);
-            await _context.SaveChangesAsync();
-            return department;
+            return  await _context.Departments.FirstOrDefaultAsync(x => x.Name == name);
+        }
+
+        public async Task<Department> FindByCode(string code)
+        {
+            return  await _context.Departments.FirstOrDefaultAsync(x => x.Code == code);
+        }
+
+        public async Task<bool> UpdateAsync(Department department)
+        {
+           
+            _context.Departments.Update(department);
+            if (await _context.SaveChangesAsync() > 0)
+            {
+                return true;
+            };
+            return false;
             
         }
     }
