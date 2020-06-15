@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 using DLL.Model;
 using DLL.Model.Interfaces;
 using Microsoft.EntityFrameworkCore;
-
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace DLL.DBContext
 {
     public class ApplicationDbContext : DbContext
@@ -48,19 +48,30 @@ namespace DLL.DBContext
 
         private void OnBeforeSavingData()
         {
-
+            ChangeTracker.DetectChanges();
             var entries = ChangeTracker.Entries()
                 .Where(e => e.State != EntityState.Detached && e.State != EntityState.Unchanged);
 
             foreach (var entry in entries)
             {
-                switch (entry.State)
+                if (entry.Entity is ITrackable trackable)
                 {
-                    case EntityState.Deleted:
-                        entry.Property(IsDeletedProperty).CurrentValue = true;
-                        entry.State = EntityState.Modified;
-                        break;
+                    switch (entry.State)
+                    {
+                        case EntityState.Added:
+                            trackable.CreatedAt = DateTimeOffset.Now;
+                            trackable.LastUpdatedAt =  DateTimeOffset.Now;
+                            break;
+                        case EntityState.Modified:
+                            trackable.LastUpdatedAt =  DateTimeOffset.Now;
+                            break;
+                        case EntityState.Deleted:
+                            entry.Property(IsDeletedProperty).CurrentValue = true;
+                            entry.State = EntityState.Modified;
+                            break;
+                    }
                 }
+                
             }
         }
 
