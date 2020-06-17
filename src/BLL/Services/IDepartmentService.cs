@@ -17,6 +17,7 @@ namespace BLL.Services
 
         Task<bool> IsCodeExists(string code);
         Task<bool> IsNameExists(string name);
+        Task<bool> IsIdExists(int id);
     }
 
     public class DepartmentService : IDepartmentService
@@ -135,6 +136,18 @@ namespace BLL.Services
         public async Task<bool> IsNameExists(string name)
         {
             var department = await _unitOfWork.DepartmentRepository.FindSingleAsync(x => x.Name == name);;
+
+            if (department == null)
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        public async Task<bool> IsIdExists(int id)
+        {
+            var department = await _unitOfWork.DepartmentRepository.FindSingleAsync(x => x.DepartmentId == id);;
 
             if (department == null)
             {
