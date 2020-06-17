@@ -8,6 +8,8 @@ namespace DLL.Repositories
     {
         IDepartmentRepository DepartmentRepository { get; }
         IStudentRepository StudentRepository { get; }
+        ICourseRepository CourseRepository { get; }
+        ICourseStudentRepository CourseStudentRepository { get; }
         Task<bool> SaveCompletedAsync();
     }
 
@@ -23,12 +25,20 @@ namespace DLL.Repositories
 
         private IDepartmentRepository _departmentRepository;
         private IStudentRepository _studentRepository;
+        private ICourseRepository _courseRepository;
+        private ICourseStudentRepository _courseStudentRepository;
 
 
         public IDepartmentRepository DepartmentRepository =>
             _departmentRepository ??= new DepartmentRepository(_context);
         public IStudentRepository StudentRepository =>
             _studentRepository ??= new StudentRepository(_context);
+        
+        public ICourseRepository CourseRepository =>
+            _courseRepository ??= new CourseRepository(_context);
+        
+        public ICourseStudentRepository CourseStudentRepository =>
+            _courseStudentRepository ??= new CourseStudentRepository(_context);
 
         public void Dispose()
         {

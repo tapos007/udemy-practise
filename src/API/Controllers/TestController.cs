@@ -16,7 +16,7 @@ namespace API.Controllers
         [HttpGet]
         public async Task<IActionResult> Index()
         {
-            await _testService.InsertData();
+          //  await _testService.DummyData2();
             return Ok("hello world");
         }
     }

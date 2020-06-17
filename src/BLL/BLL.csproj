@@ -5,6 +5,7 @@
     </PropertyGroup>
 
     <ItemGroup>
+      <PackageReference Include="Bogus" Version="29.0.2" />
       <PackageReference Include="FluentValidation.AspNetCore" Version="8.6.2" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" Version="3.1.5" />
       <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="3.1.5" />

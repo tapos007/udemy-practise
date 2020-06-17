@@ -1,4 +1,5 @@
 ﻿using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using BLL.Request;
 using DLL.Model;
@@ -10,7 +11,7 @@ namespace BLL.Services
     public interface IDepartmentService
     {
         Task<Department> InsertAsync(DepartmentInsertRequestViewModel request);
-        Task<List<Department>> GetAllAsync();
+        IQueryable<Department> GetAllAsync();
         Task<Department> UpdateAsync(string code, Department department);
         Task<Department> DeleteAsync(string code);
         Task<Department> GetAAsync(string code);
@@ -46,10 +47,11 @@ namespace BLL.Services
             throw new ApplicationValidationException("department insert has some problem");
         }
 
-        public async Task<List<Department>> GetAllAsync()
+        public IQueryable<Department> GetAllAsync()
         {
-            return await _unitOfWork.DepartmentRepository.GetList();
+            return _unitOfWork.DepartmentRepository.QueryAll();
         }
+
 
         public async Task<Department> UpdateAsync(string code, Department adepartment)
         {
