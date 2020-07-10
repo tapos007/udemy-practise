@@ -10,20 +10,25 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+
 namespace DLL.DBContext
 {
     public class ApplicationDbContext : IdentityDbContext<
-        AppUser, AppRole, int,
-        IdentityUserClaim<int>, AppUserRole, IdentityUserLogin<int>,
-        IdentityRoleClaim<int>, IdentityUserToken<int>>
+            AppUser, AppRole, int,
+            IdentityUserClaim<int>, AppUserRole, IdentityUserLogin<int>,
+            IdentityRoleClaim<int>, IdentityUserToken<int>>
+
+       
     {
         private const string IsDeletedProperty = "IsDeleted";
+
         private static readonly MethodInfo _propertyMethod = typeof(EF)
             .GetMethod(nameof(EF.Property), BindingFlags.Static | BindingFlags.Public)?.MakeGenericMethod(typeof(bool));
+
         public ApplicationDbContext(DbContextOptions options) : base(options)
         {
-            
         }
+
         private static LambdaExpression GetIsDeletedRestriction(Type type)
         {
             var parm = Expression.Parameter(type, "it");
@@ -32,8 +37,11 @@ namespace DLL.DBContext
             var lambda = Expression.Lambda(condition, parm);
             return lambda;
         }
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
+            modelBuilder.Entity<CustomerBalance>()
+                .Property(p => p.RowVersion).IsConcurrencyToken();
             foreach (var entity in modelBuilder.Model.GetEntityTypes())
             {
                 if (typeof(ISoftDeletable).IsAssignableFrom(entity.ClrType) == true)
@@ -42,13 +50,14 @@ namespace DLL.DBContext
                     modelBuilder.Entity(entity.ClrType).HasQueryFilter(GetIsDeletedRestriction(entity.ClrType));
                 }
             }
+
             base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<CourseStudent>()
-                .HasKey(bc => new { bc.CourseId, bc.StudentId });  
+                .HasKey(bc => new {bc.CourseId, bc.StudentId});
             modelBuilder.Entity<CourseStudent>()
                 .HasOne(bc => bc.Course)
                 .WithMany(b => b.CourseStudents)
-                .HasForeignKey(bc => bc.CourseId);  
+                .HasForeignKey(bc => bc.CourseId);
             modelBuilder.Entity<CourseStudent>()
                 .HasOne(bc => bc.Student)
                 .WithMany(c => c.CourseStudents)
@@ -90,7 +99,6 @@ namespace DLL.DBContext
                     .HasForeignKey(ur => ur.RoleId)
                     .IsRequired();
             });
-           
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
@@ -113,10 +121,10 @@ namespace DLL.DBContext
                     {
                         case EntityState.Added:
                             trackable.CreatedAt = DateTimeOffset.Now;
-                            trackable.LastUpdatedAt =  DateTimeOffset.Now;
+                            trackable.LastUpdatedAt = DateTimeOffset.Now;
                             break;
                         case EntityState.Modified:
-                            trackable.LastUpdatedAt =  DateTimeOffset.Now;
+                            trackable.LastUpdatedAt = DateTimeOffset.Now;
                             break;
                         case EntityState.Deleted:
                             entry.Property(IsDeletedProperty).CurrentValue = true;
@@ -124,11 +132,11 @@ namespace DLL.DBContext
                             break;
                     }
                 }
-                
             }
         }
 
-        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess, CancellationToken cancellationToken = new CancellationToken())
+        public override Task<int> SaveChangesAsync(bool acceptAllChangesOnSuccess,
+            CancellationToken cancellationToken = new CancellationToken())
         {
             OnBeforeSavingData();
             return base.SaveChangesAsync(acceptAllChangesOnSuccess, cancellationToken);
@@ -139,5 +147,11 @@ namespace DLL.DBContext
         public DbSet<Student> Students { get; set; }
         public DbSet<Course> Courses { get; set; }
         public DbSet<CourseStudent> CourseStudents { get; set; }
+        
+        // for concurrecy Example
+        public DbSet<CustomerBalance> CustomerBalances { get; set; }
+
+        public DbSet<TransactionHistory> TransactionHistories { get; set; }
+        // end concurrency example
     }
 }

@@ -10,6 +10,8 @@ namespace DLL.Repositories
         IStudentRepository StudentRepository { get; }
         ICourseRepository CourseRepository { get; }
         ICourseStudentRepository CourseStudentRepository { get; }
+        ICustomerBalanceRepository CustomerBalanceRepository { get; }
+        ITransactionHistoryRepository TransactionHistoryRepository { get; }
         Task<bool> SaveCompletedAsync();
     }
 
@@ -27,6 +29,8 @@ namespace DLL.Repositories
         private IStudentRepository _studentRepository;
         private ICourseRepository _courseRepository;
         private ICourseStudentRepository _courseStudentRepository;
+        private ICustomerBalanceRepository _customerBalanceRepository;
+        private ITransactionHistoryRepository _transactionHistoryRepository;
 
 
         public IDepartmentRepository DepartmentRepository =>
@@ -39,6 +43,12 @@ namespace DLL.Repositories
         
         public ICourseStudentRepository CourseStudentRepository =>
             _courseStudentRepository ??= new CourseStudentRepository(_context);
+        
+        public ICustomerBalanceRepository CustomerBalanceRepository =>
+            _customerBalanceRepository ??= new CustomerBalanceRepository(_context);
+        
+        public ITransactionHistoryRepository TransactionHistoryRepository =>
+            _transactionHistoryRepository ??= new TransactionHistoryRepository(_context);
 
         public void Dispose()
         {
