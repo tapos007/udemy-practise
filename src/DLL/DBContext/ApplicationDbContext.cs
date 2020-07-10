@@ -6,11 +6,16 @@ using System.Threading;
 using System.Threading.Tasks;
 using DLL.Model;
 using DLL.Model.Interfaces;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 namespace DLL.DBContext
 {
-    public class ApplicationDbContext : DbContext
+    public class ApplicationDbContext : IdentityDbContext<
+        AppUser, AppRole, int,
+        IdentityUserClaim<int>, AppUserRole, IdentityUserLogin<int>,
+        IdentityRoleClaim<int>, IdentityUserToken<int>>
     {
         private const string IsDeletedProperty = "IsDeleted";
         private static readonly MethodInfo _propertyMethod = typeof(EF)
@@ -37,7 +42,7 @@ namespace DLL.DBContext
                     modelBuilder.Entity(entity.ClrType).HasQueryFilter(GetIsDeletedRestriction(entity.ClrType));
                 }
             }
-            
+            base.OnModelCreating(modelBuilder);
             modelBuilder.Entity<CourseStudent>()
                 .HasKey(bc => new { bc.CourseId, bc.StudentId });  
             modelBuilder.Entity<CourseStudent>()
@@ -48,7 +53,44 @@ namespace DLL.DBContext
                 .HasOne(bc => bc.Student)
                 .WithMany(c => c.CourseStudents)
                 .HasForeignKey(bc => bc.StudentId);
-            base.OnModelCreating(modelBuilder);
+
+
+            modelBuilder.Entity<AppUser>(b =>
+            {
+                // Each User can have many UserClaims
+                b.HasMany(e => e.Claims)
+                    .WithOne()
+                    .HasForeignKey(uc => uc.UserId)
+                    .IsRequired();
+
+                // Each User can have many UserLogins
+                b.HasMany(e => e.Logins)
+                    .WithOne()
+                    .HasForeignKey(ul => ul.UserId)
+                    .IsRequired();
+
+                // Each User can have many UserTokens
+                b.HasMany(e => e.Tokens)
+                    .WithOne()
+                    .HasForeignKey(ut => ut.UserId)
+                    .IsRequired();
+
+                // Each User can have many entries in the UserRole join table
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.User)
+                    .HasForeignKey(ur => ur.UserId)
+                    .IsRequired();
+            });
+
+            modelBuilder.Entity<AppRole>(b =>
+            {
+                // Each Role can have many entries in the UserRole join table
+                b.HasMany(e => e.UserRoles)
+                    .WithOne(e => e.Role)
+                    .HasForeignKey(ur => ur.RoleId)
+                    .IsRequired();
+            });
+           
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)

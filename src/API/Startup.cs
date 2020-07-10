@@ -6,10 +6,12 @@ using API.Middlewares;
 using BLL;
 using DLL;
 using DLL.DBContext;
+using DLL.Model;
 using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.HttpsPolicy;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -44,13 +46,18 @@ namespace API
                 // If the client hasn't specified the API version in the request, use the default API version number 
                 config.AssumeDefaultVersionWhenUnspecified = true;
             });
-            
-            
+
+            IdentitySetup(services);
             
             DLLDependency.AllDependency(services,Configuration);
             BLLDependency.AllDependency(services, Configuration);
 
 
+        }
+
+        private void IdentitySetup(IServiceCollection services)
+        {
+            services.AddIdentity<AppUser, AppRole>().AddEntityFrameworkStores<ApplicationDbContext>().AddDefaultTokenProviders();;
         }
 
         private void SetupSwagger(IServiceCollection services)
