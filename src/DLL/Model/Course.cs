@@ -10,6 +10,8 @@ namespace DLL.Model
         public string Name { get; set; }
         public string Code { get; set; }
         public decimal Credit { get; set; }
+
+        public string ImageUrl { get; set; }
         public DateTimeOffset CreatedAt { get; set; }
         public string CreatedBy { get; set; }
         public DateTimeOffset LastUpdatedAt { get; set; }

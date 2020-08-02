@@ -5,9 +5,33 @@
 #   docker run -d --name mymysql -e MYSQL_ROOT_PASSWORD=admin123 -e MYSQL_USER=tapos -e MYSQL_PASSWORD=admin123  percona:8.0
 #  docker run -d --name myadmin  --link mymysql:db -p 8080:80 -e MYSQL_ROOT_PASSWORD=admin123 phpmyadmin/phpmyadmin
 #   docker run -d --name myrabbit -p 15672:15672 -p 5672:5672  -e RABBITMQ_DEFAULT_USER=admin -e RABBITMQ_DEFAULT_PASS=admin123 rabbitmq:3-management
-
+#  docker run -p 9000:9000  -e "MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE" 
+#-e "MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY" \
+#  minio/minio server /data
 version: "3.8"
 services:
+  myminio:
+    image: minio/minio
+    container_name: myminio
+    ports:
+    - 9000:9000
+    environment:
+      -  MINIO_ACCESS_KEY=AKIAIOSFODNN7EXAMPLE
+      -  MINIO_SECRET_KEY=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+    command: 
+      server /data
+    networks:
+      - mytestproject
+  mymc:
+    image: minio/mc
+    container_name: mymc
+    network_mode: host
+    entrypoint: >
+      /bin/sh -c "
+                /usr/bin/mc config host add minio http://127.0.0.1:9000 AKIAIOSFODNN7EXAMPLE wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY;
+                /usr/bin/mc policy set public minio/udemy-practice;
+                exit 0;
+                "
   myredis:
     image: redis
     container_name: myredis
