@@ -9,6 +9,8 @@ namespace DLL.Model
         public int CourseId { get; set; }
         public string Name { get; set; }
         public string Code { get; set; }
+        
+        
         public decimal Credit { get; set; }
 
         public string ImageUrl { get; set; }

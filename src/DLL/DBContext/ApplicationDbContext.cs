@@ -99,6 +99,14 @@ namespace DLL.DBContext
                     .HasForeignKey(ur => ur.RoleId)
                     .IsRequired();
             });
+
+            modelBuilder.Entity<Course>(c =>
+            {
+                c.Property(d => d.Name).HasMaxLength(100);
+                c.Property(d => d.Code).HasMaxLength(50);
+                c.Property(d => d.CreatedBy).HasMaxLength(100);
+                c.Property(d => d.LastUpdatedBy).HasMaxLength(100);
+            });
         }
 
         public override int SaveChanges(bool acceptAllChangesOnSuccess)
