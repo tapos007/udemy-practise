@@ -21,6 +21,9 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Microsoft.OpenApi.Models;
 using Newtonsoft.Json;
+using OpenIddict.Abstractions;
+using Pomelo.EntityFrameworkCore.MySql.Infrastructure;
+using Pomelo.EntityFrameworkCore.MySql.Storage;
 
 namespace API
 {
@@ -48,12 +51,86 @@ namespace API
                 config.AssumeDefaultVersionWhenUnspecified = true;
             });
 
+
+            DbConfiguration(services);
             IdentitySetup(services);
+            OpenIddictSetup(services);
             
             DLLDependency.AllDependency(services,Configuration);
             BLLDependency.AllDependency(services, Configuration);
 
 
+        }
+
+        private void DbConfiguration(IServiceCollection services)
+        {
+            services.AddDbContext<ApplicationDbContext>(options =>
+                options.UseOpenIddict<int>().UseMySql(Configuration.GetConnectionString("DefaultConnection"),
+                    mysqlOptions =>
+                    {
+                        mysqlOptions.ServerVersion(new Version(8, 0, 20), ServerType.MySql).CharSet(CharSet.Utf8Mb4);
+                    }
+                )
+                 
+                 
+            );
+        }
+
+        private void OpenIddictSetup(IServiceCollection services)
+        {
+            services.AddOpenIddict()
+
+                // Register the OpenIddict core components.
+                .AddCore(options =>
+                {
+                    // Configure OpenIddict to use the Entity Framework Core stores and models.
+                    // Note: call ReplaceDefaultEntities() to replace the default OpenIddict entities.
+                    options.UseEntityFrameworkCore()
+                        .UseDbContext<ApplicationDbContext>().ReplaceDefaultEntities<int>();
+                    
+                    
+                })
+
+                // Register the OpenIddict server components.
+                .AddServer(options =>
+                {
+                    // Enable the token endpoint.
+                    options.SetTokenEndpointUris("/connect/token");
+
+                    options.SetAccessTokenLifetime(
+                        TimeSpan.FromMinutes(Configuration.GetValue<int>("ProjectSetup:AccessTokenTime")));
+
+                    // Enable the password flow.
+                    options.AllowPasswordFlow().AllowRefreshTokenFlow();
+
+                    // Accept anonymous clients (i.e clients that don't send a client_id).
+                   // options.AcceptAnonymousClients();
+
+                    // Register the signing and encryption credentials.
+                    options.AddDevelopmentEncryptionCertificate()
+                        .AddDevelopmentSigningCertificate();
+
+                    // Register the ASP.NET Core host and configure the ASP.NET Core-specific options.
+                    options.UseAspNetCore()
+                        .EnableTokenEndpointPassthrough();
+                })
+
+                // Register the OpenIddict validation components.
+                .AddValidation(options =>
+                {
+                    // Import the configuration from the local OpenIddict server instance.
+                    options.UseLocalServer();
+
+                    // Register the ASP.NET Core host.
+                    options.UseAspNetCore();
+                });
+            
+            services.Configure<IdentityOptions>(options =>
+            {
+                options.ClaimsIdentity.UserNameClaimType = OpenIddictConstants.Claims.Name;
+                options.ClaimsIdentity.UserIdClaimType = OpenIddictConstants.Claims.Subject;
+                options.ClaimsIdentity.RoleClaimType = OpenIddictConstants.Claims.Role;
+            });
         }
 
         private void IdentitySetup(IServiceCollection services)
@@ -81,6 +158,35 @@ namespace API
                     {
                         Name = "Use under LICX",
                         Url = new Uri("https://example.com/license"),
+                    }
+                });
+                
+                c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
+                {
+                    Description = @"JWT Authorization header using the Bearer scheme. \r\n\r\n 
+                      Enter 'Bearer' [space] and then your token in the text input below.
+                      \r\n\r\nExample: 'Bearer 12345abcdef'",
+                    Name = "Authorization",
+                    In = ParameterLocation.Header,
+                    Type = SecuritySchemeType.ApiKey,
+                    Scheme = "Bearer"
+                });
+                
+                c.AddSecurityRequirement(new OpenApiSecurityRequirement
+                {
+                    {
+                        new OpenApiSecurityScheme
+                        {
+                            Reference = new OpenApiReference
+                            {
+                                Type = ReferenceType.SecurityScheme,
+                                Id = "Bearer"
+                            },
+                            Scheme = "oauth2",
+                            Name = "Bearer",
+                            In = ParameterLocation.Header
+                        },
+                        new List<string>()
                     }
                 });
             });
@@ -115,6 +221,7 @@ namespace API
                 ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto
             });
 
+            app.UseAuthentication();
             app.UseAuthorization();
 
             app.UseStaticFiles();

@@ -10,6 +10,7 @@ using DLL.Repositories;
 using Microsoft.AspNetCore.Http;
 using Microsoft.Extensions.Configuration;
 using Minio;
+using Utility;
 using Utility.Exceptions;
 
 namespace BLL.Services
@@ -26,6 +27,7 @@ namespace BLL.Services
         Task<bool> IsNameExists(string name);
         Task<bool> IsIdExists(int id);
 
+        Task Testing(RequestMaker loginUser);
     }
 
     public class CourseService : ICourseService
@@ -210,6 +212,14 @@ namespace BLL.Services
             return false;
         }
 
-        
+        public Task Testing(RequestMaker loginUser)
+        {
+
+            var userId = loginUser.Principal.GetUserId();
+            var userName = loginUser.Principal.GetUserName();
+            var userRole = loginUser.Principal.GetUserRole();
+            //var userId = loginUser.Principal.GetUserId();
+            throw new NotImplementedException();
+        }
     }
 }

@@ -8,6 +8,9 @@ using DLL.Model;
 using DLL.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using OpenIddict.EntityFrameworkCore.Models;
+using OpenIddict.Abstractions;
+using OpenIddict.Core;
 
 namespace BLL.Services
 {
@@ -18,6 +21,7 @@ namespace BLL.Services
         Task DummyData2();
         Task AddNewRoles();
         Task AddNewUser();
+        Task CreateAndroidAndWebClient();
     }
 
     public class TestService : ITestService
@@ -26,16 +30,20 @@ namespace BLL.Services
         private readonly ApplicationDbContext _context;
         private readonly RoleManager<AppRole> _roleManager;
         private readonly UserManager<AppUser> _userManager;
+        private readonly IOpenIddictApplicationManager _openIddictApplicationManager;
 
 
-        public TestService(IUnitOfWork unitOfWork ,
-            ApplicationDbContext context,RoleManager<AppRole> roleManager,
-            UserManager<AppUser> userManager)
+        public TestService(IUnitOfWork unitOfWork,
+            ApplicationDbContext context, RoleManager<AppRole> roleManager,
+            UserManager<AppUser> userManager,
+            IOpenIddictApplicationManager openIddictApplicationManager)
         {
             _unitOfWork = unitOfWork;
             _context = context;
             _roleManager = roleManager;
             _userManager = userManager;
+            _openIddictApplicationManager = openIddictApplicationManager;
+            _openIddictApplicationManager = openIddictApplicationManager;
         }
 
         public async Task InsertData()
@@ -72,14 +80,10 @@ namespace BLL.Services
             await _context.Departments.AddRangeAsync(departmentListWithStudent);
 
             await _context.SaveChangesAsync();
-
-
-
         }
 
         public async Task DummyData2()
         {
-            
             // var courseDummy = new Faker<Course>()
             //     .RuleFor(o => o.Name, f => f.Name.FirstName())
             //     .RuleFor(o => o.Code, f => f.Name.LastName())
@@ -87,8 +91,8 @@ namespace BLL.Services
             // var courseDummyList = courseDummy.Generate(50).ToList();
             // await _context.Courses.AddRangeAsync(courseDummyList);
             // await _context.SaveChangesAsync();
-            
-            
+
+
             var studentIds = await _context.Students.Select(x => x.StudentId).ToListAsync();
             var allCourseId = await _context.Courses.Select(x => x.CourseId).ToListAsync();
             int count = 0;
@@ -104,7 +108,7 @@ namespace BLL.Services
                         StudentId = aStudent
                     });
                 }
-            
+
                 await _context.CourseStudents.AddRangeAsync(courseStudent);
                 await _context.SaveChangesAsync();
                 count += 5;
@@ -113,25 +117,25 @@ namespace BLL.Services
 
         public async Task AddNewRoles()
         {
-           var roleList = new List<string>()
-           {
-               "admin",
-               "manager",
-               "supervisor"
-           };
+            var roleList = new List<string>()
+            {
+                "admin",
+                "manager",
+                "supervisor"
+            };
 
-           foreach (var role in roleList)
-           {
-               var exits = await _roleManager.FindByNameAsync(role);
+            foreach (var role in roleList)
+            {
+                var exits = await _roleManager.FindByNameAsync(role);
 
-               if (exits==null)
-               {
-                   await _roleManager.CreateAsync(new AppRole()
-                   {
-                       Name = role
-                   });
-               }
-           }
+                if (exits == null)
+                {
+                    await _roleManager.CreateAsync(new AppRole()
+                    {
+                        Name = role
+                    });
+                }
+            }
         }
 
         public async Task AddNewUser()
@@ -150,6 +154,12 @@ namespace BLL.Services
                     Email = "sanjib@gmail.com",
                     FullName = "sanjib dhar"
                 },
+                new AppUser()
+                {
+                    UserName = "monir@gmail.com",
+                    Email = "monir@gmail.com",
+                    FullName = "monir hossain"
+                },
             };
 
             foreach (var user in userList)
@@ -162,8 +172,73 @@ namespace BLL.Services
 
                     if (insertedData.Succeeded)
                     {
-                        await _userManager.AddToRoleAsync(user, "admin");
+                        var myRole = "";
+                        if (user.Email == "tapos.aa@gmail.com")
+                        {
+                            myRole = "admin";
+                        }
+                        else if (user.Email == "sanjib@gmail.com")
+                        {
+                            myRole = "manager";
+                        }
+                        else if (user.Email == "monir@gmail.com")
+                        {
+                            myRole = "supervisor";
+                        }
+
+                        await _userManager.AddToRoleAsync(user, myRole);
                     }
+                }
+            }
+        }
+
+        public async Task CreateAndroidAndWebClient()
+        {
+            var listOfClient = new List<OpenIddictApplicationDescriptor>()
+            {
+                new OpenIddictApplicationDescriptor()
+                {
+                    ClientId = "udemy_android_application",
+                    ClientSecret = "udemy123",
+                    DisplayName = "our android client",
+                    Permissions =
+                    {
+                        OpenIddictConstants.Permissions.Endpoints.Authorization,
+                        OpenIddictConstants.Permissions.Endpoints.Logout,
+                        OpenIddictConstants.Permissions.Endpoints.Token,
+                        OpenIddictConstants.Permissions.GrantTypes.Password,
+                        OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+                        OpenIddictConstants.Permissions.Scopes.Email,
+                        OpenIddictConstants.Permissions.Scopes.Profile,
+                        OpenIddictConstants.Permissions.Scopes.Roles,
+                    }
+                },
+                new OpenIddictApplicationDescriptor()
+                {
+                    ClientId = "udemy_web_application",
+                    ClientSecret = "udemy456",
+                    DisplayName = "our web application client",
+                    Permissions =
+                    {
+                        OpenIddictConstants.Permissions.Endpoints.Authorization,
+                        OpenIddictConstants.Permissions.Endpoints.Logout,
+                        OpenIddictConstants.Permissions.Endpoints.Token,
+                        OpenIddictConstants.Permissions.GrantTypes.Password,
+                        OpenIddictConstants.Permissions.GrantTypes.RefreshToken,
+                        OpenIddictConstants.Permissions.Scopes.Email,
+                        OpenIddictConstants.Permissions.Scopes.Profile,
+                        OpenIddictConstants.Permissions.Scopes.Roles,
+                    }
+                }
+            };
+
+            foreach (var application in listOfClient)
+            {
+                var applicationExists = await _openIddictApplicationManager.FindByClientIdAsync(application.ClientId);
+
+                if (applicationExists == null)
+                {
+                    await _openIddictApplicationManager.CreateAsync(application);
                 }
             }
         }

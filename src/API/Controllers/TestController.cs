@@ -20,7 +20,8 @@ namespace API.Controllers
         {
            // await _testService.AddNewRoles();
             // await _testService.AddNewUser();
-            await _transactionService.FinancialTransaction();
+            await _testService.AddNewRoles();
+            await _testService.AddNewUser();
             return Ok("hello world");
         }
     }

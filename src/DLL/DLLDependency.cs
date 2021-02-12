@@ -14,13 +14,8 @@ namespace DLL
         public  static void AllDependency(IServiceCollection services,IConfiguration configuration)
         {
 
-            services.AddDbContext<ApplicationDbContext>(options =>
-                 options.UseMySql(configuration.GetConnectionString("DefaultConnection"),
-                    mysqlOptions =>
-                    {
-                        mysqlOptions.ServerVersion(new Version(8, 0, 20), ServerType.MySql).CharSet(CharSet.Utf8Mb4);
-                    }
-                    ));
+           
+            
                 // options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
             
             
